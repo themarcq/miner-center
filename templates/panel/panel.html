@@ -17,6 +17,29 @@
                 <div class="col-md-3"><b>Uptime</b> {{ worker.newest_stat.uptime }}</div>
                 <div class="col-md-12">
                     <h5>Total hashrate</h5>
+                    <canvas id="total-hashrate-{{ worker.pk }}" width="900" height="400"></canvas>
+                    <script>
+                    var ctx = ("#total-hashrate-{{ worker.pk }}").getContext('2d');
+                    var myChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+                            datasets: [{
+                                label: 'total hashrate',
+                                data: {{ worker.last_week_total_hashrate_data }}
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero:true
+                                    }
+                                }]
+                            }
+                        }
+                    });
+                    </script>
                 </div>
                 <div class="col-md-12">
                     <h5>Temperatures</h5>
@@ -34,6 +57,6 @@
         </div>
         <script type="text/javascript" src="{% static 'js/jquery.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/chart.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/Chart.bundle.min.js' %}"></script>
     </body>
 </html>

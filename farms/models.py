@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import datetime, timedelta
+import json
 
 
 class Farm(models.Model):
@@ -36,6 +37,10 @@ class Worker(models.Model):
     def last_week_stats(self):
         return self.stats.filter(timestamp__gte=datetime.now()-timedelta(days=7))\
                 .prefetch_related('gpu_stats')
+
+    @property
+    def last_week_total_hashrate_data(self):
+        return json.dumps([o.total_hashrate for o in self.last_week_stats])
 
 
 class WorkerStat(models.Model):
