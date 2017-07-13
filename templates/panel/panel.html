@@ -7,7 +7,11 @@
     <body>
         <script type="text/javascript" src="{% static 'js/jquery.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/Chart.bundle.min.js' %}"></script>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script>
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+        </script>
         <div class="container">
             {% for farm in farms %}
             <div class="col-md-12">
@@ -20,28 +24,22 @@
                 <div class="col-md-3"><b>Uptime</b> {{ worker.newest_stat.uptime }}</div>
                 <div class="col-md-12">
                     <h5>Total hashrate</h5>
-                    <canvas id="total-hashrate-{{ worker.pk }}" width="900" height="200"></canvas>
+                    <div id="total-hashrate-{{ worker.pk }}" width="900" height="200"></div>
                     <script>
-                    var ctx = $("#total-hashrate-{{ worker.pk }}")[0].getContext('2d');
-                    var myChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
-                            datasets: [{
-                                label: 'total hashrate',
-                                data: {{ worker.last_week_total_hashrate_data }}
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                yAxes: [{
-                                    ticks: {
-                                        beginAtZero:true
-                                    }
-                                }]
-                            }
+                        function drawChart() {
+                            var data = google.visualization.arrayToDataTable(
+                                {{ worker.last_week_total_hashrate_data }}
+                            );
+
+                            var options = {
+                              title: 'Worker total hashrate',
+                              hAxis: {title: 'Time',  titleTextStyle: {color: '#333'}},
+                              vAxis: {minValue: 0}
+                            };
+
+                            var chart = new google.visualization.AreaChart(document.getElementById('total-hashrate-{{ worker.pk }}'));
+                            chart.draw(data, options);
                         }
-                    });
                     </script>
                 </div>
                 <div class="col-md-12">

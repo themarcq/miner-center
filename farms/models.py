@@ -3,11 +3,25 @@ from datetime import datetime, timedelta
 import json
 import logging
 from functools import wraps
+from datetime import timedelta, date
+
+
+def timerange(start_date, end_date):
+    for n in range(int ((end_date - start_date).seconds//60-1)):
+        yield start_date + timedelta(minutes=n+1)
+
+
+class DummyWorkerStat():
+    def __init__(self, time):
+        self.timestamp = time
+        self.update = 0
+        self.total_hashrate = 0
+        self.shares = 0
+        self.rejected_shares = 0
+        self.gpu_stats = []
 
 
 logger = logging.getLogger('miner_center')
-
-
 def exception_handle(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -49,17 +63,30 @@ class Worker(models.Model):
 
     @property
     def newest_stat(self):
-        return self.stats.order_by('timestamp').last()
+        return self.stats.filter(timestamp__gte=datetime.now()-timedelta(minutes=2)).order_by('timestamp').last()
 
+    _last_week_stats = None
     @property
     def last_week_stats(self):
-        return self.stats.filter(timestamp__gte=datetime.now()-timedelta(days=7))\
+        if not self._last_week_stats:
+            stats = self.stats.filter(timestamp__gte=datetime.now()-timedelta(days=7))\
+                .order_by('timestamp')\
                 .prefetch_related('gpu_stats')
+            stats_fixed = []
+            for stat in stats:
+                if len(stats_fixed) == 0:
+                    stats_fixed.append(stat)
+                    continue
+                for time in timerange(stats_fixed[-1:].timestamp, stat.timestamp):
+                    stats_fixed.append(DummyWorkerStat(time))
+                stats_fixed.append(stat)
+            self._last_week_stats = stats_fixed
+        return self._last_week_stats
 
     @property
     @exception_handle
     def last_week_total_hashrate_data(self):
-        return json.dumps([o.total_hashrate for o in self.last_week_stats])
+        return json.dumps([['Time', 'Hashrate']]+[[stat.timestamp, stat.total_hashrate] for stat in self.last_week_stats])
 
 
 class WorkerStat(models.Model):
