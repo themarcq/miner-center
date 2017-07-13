@@ -5,6 +5,9 @@
         <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" type="text/css"/>
     </head>
     <body>
+        <script type="text/javascript" src="{% static 'js/jquery.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/Chart.bundle.min.js' %}"></script>
         <div class="container">
             {% for farm in farms %}
             <div class="col-md-12">
@@ -17,9 +20,9 @@
                 <div class="col-md-3"><b>Uptime</b> {{ worker.newest_stat.uptime }}</div>
                 <div class="col-md-12">
                     <h5>Total hashrate</h5>
-                    <canvas id="total-hashrate-{{ worker.pk }}" width="900" height="400"></canvas>
+                    <canvas id="total-hashrate-{{ worker.pk }}" width="900" height="200"></canvas>
                     <script>
-                    var ctx = ("#total-hashrate-{{ worker.pk }}").getContext('2d');
+                    var ctx = $("#total-hashrate-{{ worker.pk }}")[0].getContext('2d');
                     var myChart = new Chart(ctx, {
                         type: 'line',
                         data: {
@@ -55,8 +58,5 @@
             </div>
             {% endfor %}
         </div>
-        <script type="text/javascript" src="{% static 'js/jquery.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/Chart.bundle.min.js' %}"></script>
     </body>
 </html>

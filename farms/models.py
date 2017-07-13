@@ -1,6 +1,24 @@
 from django.db import models
 from datetime import datetime, timedelta
 import json
+import logging
+from functools import wraps
+
+
+logger = logging.getLogger('miner_center')
+
+
+def exception_handle(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        def try_except(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                logger.debug(e)
+                raise
+        return try_except(*args, **kwargs)
+    return wrapper
 
 
 class Farm(models.Model):
@@ -39,6 +57,7 @@ class Worker(models.Model):
                 .prefetch_related('gpu_stats')
 
     @property
+    @exception_handle
     def last_week_total_hashrate_data(self):
         return json.dumps([o.total_hashrate for o in self.last_week_stats])
 
