@@ -3,15 +3,47 @@
 <html>
     <head>
         <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" type="text/css"/>
-    </head>
-    <body>
         <script type="text/javascript" src="{% static 'js/jquery.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script>
             google.charts.load('current', {'packages':['corechart']});
-            google.charts.setOnLoadCallback(drawChart);
+            
+            function chartarizeData(data) {
+                var arrayLength = data.length;
+                for (var i = 1; i < arrayLength; i++) {
+                    data[i][0] = new Date(data[i][0]);
+                }
+                return data
+            }
+
+            function drawChart(title, elementID, data, colors) {
+                google.charts.setOnLoadCallback(drawCreatedChart.bind(null, title, elementID, data, colors));
+
+                function drawCreatedChart(title, elementID, data, colors) {
+                    var data = google.visualization.arrayToDataTable(
+                        chartarizeData(data)
+                    );
+
+                    var options = {
+                      title: title,
+                      hAxis: {title: 'Time',  titleTextStyle: {color: '#333'}},
+                      colors: colors,
+                      explorer: {
+                        actions: ['dragToZoom', 'rightClickToReset'],
+                        axis: 'horizontal',
+                        keepInBounds: true
+                      }
+                    };
+
+                    var chart = new google.visualization.AreaChart(document.getElementById(elementID));
+                    chart.draw(data, options);
+                }
+            }
         </script>
+
+    </head>
+    <body>
         <div class="container">
             {% for farm in farms %}
             <div class="col-md-12">
@@ -23,33 +55,28 @@
                 <div class="col-md-3"><b>Rejected Shares</b> {{ worker.newest_stat.rejected_shares }}</div>
                 <div class="col-md-3"><b>Uptime</b> {{ worker.newest_stat.uptime }}</div>
                 <div class="col-md-12">
-                    <h5>Total hashrate</h5>
                     <div id="total-hashrate-{{ worker.pk }}" width="900" height="200"></div>
                     <script>
-                        function drawChart() {
-                            var data = google.visualization.arrayToDataTable(
-                                {{ worker.last_week_total_hashrate_data }}
-                            );
-
-                            var options = {
-                              title: 'Worker total hashrate',
-                              hAxis: {title: 'Time',  titleTextStyle: {color: '#333'}},
-                              vAxis: {minValue: 0}
-                            };
-
-                            var chart = new google.visualization.AreaChart(document.getElementById('total-hashrate-{{ worker.pk }}'));
-                            chart.draw(data, options);
-                        }
+                        drawChart('Total hashrate', 'total-hashrate-{{ worker.pk }}', {{ worker.last_week_total_hashrate_data|safe }}, ["#6df36d"])
                     </script>
                 </div>
                 <div class="col-md-12">
-                    <h5>Temperatures</h5>
+                    <div id="hashrates-{{ worker.pk }}" width="900" height="200"></div>
+                    <script>
+                        drawChart('GPUs\' hashrates', 'hashrates-{{ worker.pk }}', {{ worker.last_week_hashrates_data|safe }}, ["#6d6df3", "#6d8ef3", "#6db0f3", "#6dd2f3", "#6df3f3", "#6df3d2"])
+                    </script>
                 </div>
                 <div class="col-md-12">
-                    <h5>Hashrates</h5>
+                    <div id="temperatures-{{ worker.pk }}" width="900" height="200"></div>
+                    <script>
+                        drawChart('GPUs\' temperatures', 'temperatures-{{ worker.pk }}', {{ worker.last_week_temperatures_data|safe }}, ["#f36d6d", "#f38e6d", "#f3b06d", "#f3d26d", "#f3f36d", "#d2f36d"])
+                    </script>
                 </div>
                 <div class="col-md-12">
-                    <h5>Fan speeds</h5>
+                    <div id="fan-speeds-{{ worker.pk }}" width="900" height="200"></div>
+                    <script>
+                        drawChart('GPUs\' fan speeds', 'fan-speeds-{{ worker.pk }}', {{ worker.last_week_fan_speeds_data|safe }}, ["#6df3d2", "#6df3f3", "#6dd2f3", "#6db0f3", "#6d8ef3", "#6d6df3"])
+                    </script>
                 </div>
                 <hr/>
                 {% endfor %}

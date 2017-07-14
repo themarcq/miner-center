@@ -19,7 +19,7 @@ class GPUStatAdmin(admin.ModelAdmin):
 
 @admin.register(WorkerStat)
 class WorkerStatAdmin(admin.ModelAdmin):
-    pass
+    readonly_fields=('timestamp',)
 
 
 @admin.register(WorkerError)
