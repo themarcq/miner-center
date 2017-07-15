@@ -44,7 +44,7 @@ class Worker(models.Model):
         self._stats = None
         self.gpu_number = 0
         if length == '24hours':
-            self._timedelta = timedeta(days=1)
+            self._timedelta = timedelta(days=1)
         elif length == 'week':
             self._timedelta = timedelta(days=7)
         elif length == 'month':

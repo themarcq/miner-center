@@ -17,12 +17,6 @@ class PanelView(LoginRequiredMixin, views.View):
             for worker in farm['workers']:
                 worker.set_data_length(length)
 
-        #DEBUG
-#        for farm in farms:
-#            for worker in farm['workers']:
-#                worker.fan_speeds_data
-        #DEBUG
-
         return render(request, 'panel/panel.html', {
             'farms': farms
         })

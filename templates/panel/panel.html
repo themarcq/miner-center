@@ -44,6 +44,12 @@
 
     </head>
     <body>
+        <nav class="navbar navbar-inverse bg-inverse">
+            <a href="{% url 'panel' '8hours' %}" class="btn btn-success">8 Hours</a>
+            <a href="{% url 'panel' '24hours' %}" class="btn btn-success">24 Hours</a>
+            <a href="{% url 'panel' 'week' %}" class="btn btn-success">Week</a>
+            <a href="{% url 'panel' 'month' %}" class="btn btn-success">Month</a>
+        </nav>
         <div class="container">
             {% for farm in farms %}
             <div class="col-md-12">
