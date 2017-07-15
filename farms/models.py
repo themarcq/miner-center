@@ -1,38 +1,9 @@
 from django.db import models
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from django.utils import timezone
 import json
-import logging
-from functools import wraps
-from datetime import timedelta, date
-
-
-def timerange(start_date, end_date):
-    for n in range(int ((end_date - start_date).seconds//60-1)):
-        yield start_date + timedelta(minutes=n+1)
-
-
-class DummyWorkerStat():
-    def __init__(self, time):
-        self.timestamp = time
-        self.update = 0
-        self.total_hashrate = 0
-        self.shares = 0
-        self.rejected_shares = 0
-        self.gpu_stats = []
-
-
-logger = logging.getLogger('miner_center')
-def exception_handle(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        def try_except(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                logger.debug(e)
-                raise
-        return try_except(*args, **kwargs)
-    return wrapper
+from math import ceil, floor
+from .utils import exception_handle
 
 
 class Farm(models.Model):
@@ -61,89 +32,136 @@ class Worker(models.Model):
 
     index = models.PositiveIntegerField()
 
+    resolution = 100 # number of points to generate to show
+
     def __init__(self, *args, **kwargs):
         super(Worker, self).__init__(*args, **kwargs)
-        self._last_week_stats = None
-        self._gpu_data = None
+        self._stats = None
+        self._timedelta = timedelta(hours=8)
+        self.gpu_number = 0
+
+    def set_data_length(self,length):
+        self._stats = None
+        self.gpu_number = 0
+        if length == '24hours':
+            self._timedelta = timedeta(days=1)
+        elif length == 'week':
+            self._timedelta = timedelta(days=7)
+        elif length == 'month':
+            self._timedelta = timedelta(days=30)
+        elif length == '8hours':
+            self._timedelta = timedelta(hours=8)
+        else:
+            raise ValueError
 
     @property
     def newest_stat(self):
-        return self.stats.filter(timestamp__gte=datetime.now()-timedelta(minutes=2)).order_by('timestamp').last()
+        return self.stats.filter(timestamp__gte=timezone.now()-timedelta(minutes=2)).order_by('timestamp').last()
 
     @property
-    def last_week_stats(self):
-        if not self._last_week_stats:
-            stats = self.stats.filter(timestamp__gte=datetime.now()-timedelta(hours=8))\
-                .order_by('timestamp')\
-                .prefetch_related('gpu_stats')
+    def stats_data(self):
+        if not self._stats:
+            # get data from database and fill the gaps with zeros
+            since_date = timezone.now()-self._timedelta
+            stats = self.stats.filter(timestamp__gte=since_date)\
+                .order_by('timestamp')
             stats_fixed = []
             for stat in stats:
+                self.gpu_number = max(self.gpu_number, len(stat.gpu_stats.all()))
                 if len(stats_fixed) == 0:
-                    stats_fixed.append(stat)
-                    continue
-                for time in timerange(stats_fixed[-1].timestamp, stat.timestamp):
-                    stats_fixed.append(DummyWorkerStat(time))
-                stats_fixed.append(stat)
-            self._last_week_stats = stats_fixed
-        return self._last_week_stats
+                    if (stat.timestamp - (since_date)).total_seconds()/60 > 2:
+                        stats_fixed.append({
+                            'timestamp': since_date.timestamp()*1000,
+                            'total_hashrate': 0,
+                            'gpu_stats': []
+                        })
+                    else:
+                        stats_fixed.append({
+                            'timestamp': stat.timestamp.timestamp()*1000,
+                            'total_hashrate': stat.total_hashrate/1000.,
+                            'gpu_stats': [{
+                                'hashrate': gpu.hashrate/1000.,
+                                'temperature': gpu.temperature,
+                                'fan_speed': gpu.fan_speed
+                            } for gpu in stat.gpu_stats.all()]
+                        })
+                        continue
+                for time in range(int(stats_fixed[-1]['timestamp']+60000), int(stat.timestamp.timestamp()*1000-60000), 60000):
+                    stats_fixed.append({
+                        'timestamp': time,
+                        'total_hashrate': 0,
+                        'gpu_stats': []
+                    })
+                stats_fixed.append({
+                    'timestamp': stat.timestamp.timestamp()*1000,
+                    'total_hashrate': stat.total_hashrate/1000.,
+                    'gpu_stats': [{
+                        'hashrate': gpu.hashrate/1000.,
+                        'temperature': gpu.temperature,
+                        'fan_speed': gpu.fan_speed
+                    } for gpu in stat.gpu_stats.all()]
+                })
+            del stats
+            # fill out missing graphic cards
+            for stat in stats_fixed:
+                stat['gpu_stats'] += [{
+                    'hashrate': 0,
+                    'temperature': 0,
+                    'fan_speed': 0
+                }for i in range(self.gpu_number - len(stat['gpu_stats']))]
+
+            # compress it to set resolution
+            if len(stats_fixed) < self.resolution:
+                self._stats = stats_fixed
+            else:
+                compressed_stats = []
+                ratio = self.resolution/float(len(stats_fixed))
+                for i in range(1,self.resolution+1):
+                    first = int(ceil((i-1)/ratio))
+                    last = int(ceil((i)/ratio))
+                    cut = stats_fixed[first:last]
+                    cut_length = float(last-first)
+                    compressed_stats.append({
+                        'timestamp': (since_date + ((timezone.now()-since_date)/self.resolution*i)).timestamp()*1000,
+                        'total_hashrate': sum([o['total_hashrate'] for o in cut])/cut_length,
+                        'gpu_stats': [{
+                            'hashrate': sum([o['gpu_stats'][j]['hashrate'] for o in cut])/cut_length,
+                            'temperature': sum([o['gpu_stats'][j]['temperature'] for o in cut])/cut_length,
+                            'fan_speed': sum([o['gpu_stats'][j]['fan_speed'] for o in cut])/cut_length
+                        } for j in range(self.gpu_number)]
+                    })
+                self._stats = compressed_stats
+        return self._stats
 
     @property
     @exception_handle
-    def last_week_total_hashrate_data(self):
+    def total_hashrate_data(self):
         return json.dumps([['Time', 'Hashrate']]+[
-            [stat.timestamp.timestamp()*1000, stat.total_hashrate/1000.] for stat in self.last_week_stats
+            [stat['timestamp'], stat['total_hashrate']] for stat in self.stats_data
         ])
 
-    def gpu_data(self, stats):
-        if self._gpu_data is None:
-            cards_number = 0
-            for stat in stats:
-                cards_number = max(cards_number, len(stat.gpu_stats.all()) if stat.gpu_stats else 0)
-            title = ['Time'] + ['Card #{}'.format(i) for i in range(cards_number)]
-            data = [title]
-            for stat in stats:
-                datum = [stat.timestamp.timestamp()*1000]
-                for card in range(cards_number):
-                    try:
-                        if stat.gpu_stats:
-                            gpu = stat.gpu_stats.all()[card]
-                        else:
-                            raise IndexError
-                    except IndexError:
-                        datum.append(None)
-                    else:
-                        datum.append(gpu)
-                data.append(datum)
-            self._gpu_data = data
-        return self._gpu_data
-
     def get_gpu_stat(self, attr):
-        gpu_data = self.gpu_data(self.last_week_stats)
-        data = [gpu_data[0]]
-        for gpu_stat_list in gpu_data[1:]:
-            datum = [gpu_stat_list[0]]
-            for gpu_stat in gpu_stat_list[1:]:
-                if gpu_stat:
-                    datum.append(getattr(gpu_stat, attr, 0))
-                else:
-                    datum.append(0)
+        stats_data = self.stats_data
+        data = [['Time']+["Card #{}".format(i) for i in range(self.gpu_number)]]
+        for stat in stats_data:
+            datum = [stat['timestamp']] + [gpu[attr] for gpu in stat['gpu_stats']]
             data.append(datum)
         return json.dumps(data)
 
     @property
     @exception_handle
-    def last_week_temperatures_data(self):
+    def temperatures_data(self):
         return self.get_gpu_stat('temperature')
 
     @property
     @exception_handle
-    def last_week_hashrates_data(self):
+    def hashrates_data(self):
         return self.get_gpu_stat('hashrate')
 
 
     @property
     @exception_handle
-    def last_week_fan_speeds_data(self):
+    def fan_speeds_data(self):
         return self.get_gpu_stat('fan_speed')
 
 
