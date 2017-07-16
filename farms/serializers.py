@@ -17,7 +17,6 @@ class WorkerStatSerializer(serializers.ModelSerializer):
         exclude = ('timestamp', "worker")
 
     def create(self, validated_data):
-        print(validated_data)
         gpu_stats = validated_data.pop('gpu_stats', [])
         worker_id = validated_data.pop('worker_id', None)
         worker,_ = Worker.objects.get_or_create(
