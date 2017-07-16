@@ -65,19 +65,33 @@ class Worker(models.Model):
             since_date = timezone.now()-self._timedelta
             stats = self.stats.filter(timestamp__gte=since_date)\
                 .order_by('timestamp')
+            if len(stats) == 0:
+                self._stats = [
+                    {
+                        'timestamp': since_date.timestamp()*60000,
+                        'total_hashrate': 0,
+                        'gpu_stats': []
+                    },
+                    {
+                        'timestamp': timezone.now().timestamp()*60000,
+                        'total_hashrate': 0,
+                        'gpu_stats': []
+                    }
+                ]
+                return self._stats
             stats_fixed = []
             for stat in stats:
                 self.gpu_number = max(self.gpu_number, len(stat.gpu_stats.all()))
                 if len(stats_fixed) == 0:
                     if (stat.timestamp - (since_date)).total_seconds()/60 > 2:
                         stats_fixed.append({
-                            'timestamp': since_date.timestamp()*1000,
+                            'timestamp': int(since_date.timestamp())//60*60000,
                             'total_hashrate': 0,
                             'gpu_stats': []
                         })
                     else:
                         stats_fixed.append({
-                            'timestamp': stat.timestamp.timestamp()*1000,
+                            'timestamp': int(stat.timestamp.timestamp())//60*60000,
                             'total_hashrate': stat.total_hashrate/1000.,
                             'gpu_stats': [{
                                 'hashrate': gpu.hashrate/1000.,
@@ -86,14 +100,14 @@ class Worker(models.Model):
                             } for gpu in stat.gpu_stats.all()]
                         })
                         continue
-                for time in range(int(stats_fixed[-1]['timestamp']+60000), int(stat.timestamp.timestamp()*1000-60000), 60000):
+                for time in range(int(stats_fixed[-1]['timestamp']+60000), int(stat.timestamp.timestamp())//60*60000, 60000):
                     stats_fixed.append({
                         'timestamp': time,
                         'total_hashrate': 0,
                         'gpu_stats': []
                     })
                 stats_fixed.append({
-                    'timestamp': stat.timestamp.timestamp()*1000,
+                    'timestamp': int(stat.timestamp.timestamp())//60*60000,
                     'total_hashrate': stat.total_hashrate/1000.,
                     'gpu_stats': [{
                         'hashrate': gpu.hashrate/1000.,
@@ -102,6 +116,16 @@ class Worker(models.Model):
                     } for gpu in stat.gpu_stats.all()]
                 })
             del stats
+
+            # add zeros from last stat to this moment
+            now = int(timezone.now().timestamp())//60*60000
+            while stats_fixed[-1]['timestamp'] <= now-60000:
+                stats_fixed.append({
+                    'timestamp': stats_fixed[-1]['timestamp']+60000,
+                    'total_hashrate': 0,
+                    'gpu_stats': []
+                })
+
             # fill out missing graphic cards
             for stat in stats_fixed:
                 stat['gpu_stats'] += [{
@@ -126,8 +150,8 @@ class Worker(models.Model):
                         'total_hashrate': sum([o['total_hashrate'] for o in cut])/cut_length,
                         'gpu_stats': [{
                             'hashrate': sum([o['gpu_stats'][j]['hashrate'] for o in cut])/cut_length,
-                            'temperature': sum([o['gpu_stats'][j]['temperature'] for o in cut])/cut_length,
-                            'fan_speed': sum([o['gpu_stats'][j]['fan_speed'] for o in cut])/cut_length
+                            'temperature': max([o['gpu_stats'][j]['temperature'] for o in cut]),
+                            'fan_speed': max([o['gpu_stats'][j]['fan_speed'] for o in cut])
                         } for j in range(self.gpu_number)]
                     })
                 self._stats = compressed_stats
