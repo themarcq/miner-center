@@ -6,13 +6,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 class PanelView(LoginRequiredMixin, views.View):
     def get(self, request, length="8hours"):
-        farms_query = Farm.objects.all().prefetch_related('workers').prefetch_related('workers__stats').prefetch_related('workers__stats__gpu_stats')
+        farms_query = Farm.objects.all().prefetch_related('workers')
+
         farms = [
             {
                 'label': farm.label,
                 'workers': list(farm.workers.all())
             } for farm in farms_query
         ]
+
         for farm in farms:
             for worker in farm['workers']:
                 worker.set_data_length(length)

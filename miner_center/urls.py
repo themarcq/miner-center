@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
+from django.conf import settings
 from panel import urls as panel_urls
 from . import api_urls
 
@@ -23,3 +24,9 @@ urlpatterns = [
     url(r'^api/', include(api_urls)),
     url(r'^', include(panel_urls)),
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns
