@@ -64,7 +64,8 @@ class Worker(models.Model):
             # get data from database and fill the gaps with zeros
             since_date = timezone.now()-self._timedelta
             stats = self.stats.filter(timestamp__gte=since_date)\
-                .order_by('timestamp')
+                .order_by('timestamp')\
+                .prefetch_related('gpu_stats')
             if len(stats) == 0:
                 self._stats = [
                     {
@@ -80,8 +81,10 @@ class Worker(models.Model):
                 ]
                 return self._stats
             stats_fixed = []
+            gpu_number = 0
+            append_to_fixed_stats = stats_fixed.append
             for stat in stats:
-                self.gpu_number = max(self.gpu_number, len(stat.gpu_stats.all()))
+                gpu_number = max(gpu_number, len(stat.gpu_stats.all()))
                 if len(stats_fixed) == 0:
                     if (stat.timestamp - (since_date)).total_seconds()/60 > 2:
                         stats_fixed.append({
@@ -115,7 +118,7 @@ class Worker(models.Model):
                         'fan_speed': gpu.fan_speed
                     } for gpu in stat.gpu_stats.all()]
                 })
-            del stats
+            self.gpu_number = gpu_number
 
             # add zeros from last stat to this moment
             now = int(timezone.now().timestamp())//60*60000
