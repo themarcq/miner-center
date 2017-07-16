@@ -2,6 +2,6 @@ django-extensions==1.8.1
 Django==1.11.3
 django_debug_toolbar==1.8
 djangorestframework==3.6.3
+django_debug_toolbar==1.8
 gunicorn
-django-debug-toolbar
 mysqlclient
