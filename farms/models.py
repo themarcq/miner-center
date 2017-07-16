@@ -118,8 +118,8 @@ class Worker(models.Model):
             del stats
 
             # add zeros from last stat to this moment
+            now = int(timezone.now().timestamp())//60*60000
             if stats_fixed[-1]['timestamp'] < now-60000:
-                now = int(timezone.now().timestamp())//60*60000
                 while stats_fixed[-1]['timestamp'] <= now-60000:
                     stats_fixed.append({
                         'timestamp': stats_fixed[-1]['timestamp']+60000,
