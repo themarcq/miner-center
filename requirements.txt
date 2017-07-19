@@ -4,4 +4,5 @@ django_debug_toolbar==1.8
 djangorestframework==3.6.3
 django_debug_toolbar==1.8
 gunicorn
+requests
 mysqlclient
