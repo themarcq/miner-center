@@ -7,7 +7,7 @@
         <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script>
-            google.charts.load('current', {'packages':['corechart']});
+            google.charts.load('current', {'packages':['corechart', 'gauge']});
             
             function chartarizeData(data) {
                 var arrayLength = data.length;
@@ -52,6 +52,52 @@
             {{ client_ip }}
         </nav>
         <div class="container">
+            <div class="col-md-12">
+                {% if nanopool_data.error %}
+                    <h1>{{ nanopool_data.error }}</h1>
+                {% else %}
+                    <div id="nanopool_balance" style="width:900px; margin: auto;">
+                        <h1>
+                            <div class='col-md-4' style="color: #404040">
+                                {{ nanopool_data.balance }} <img style="height: 1em; margin-top: -0.2em" src="{% static 'images/ethereum-logo.png' %}"/>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="progress" style="margin-top: 0.28em">
+                                    <div class="progress-bar" role="progressbar" aria-valuenow="{{ nanopool_data.balance_percent }}"
+                                           aria-valuemin="0" aria-valuemax="100" style="width:{{ nanopool_data.balance_percent }}%">
+                                        <span class="sr-only">{{ nanopool_data.balance_percent }}% out of 0.2ETH Complete</span>
+                                     </div>
+                                </div>
+                            </div>
+                        </h1>
+                    </div>
+                    <hr class="col-md-12"/>
+                    <div class="text-center"  style="width:900px; margin: auto;" id="nanopool_gauges"></div>
+                    <hr class="col-md-12"/>
+                    <script>
+                        google.charts.setOnLoadCallback(drawGauges) 
+                        function drawGauges() {
+                            var data = google.visualization.arrayToDataTable([
+                               ['Label', 'Value'],
+                               ['Moment hr', {{ nanopool_data.hashrate }}],
+                               ['1H avg hr', {{ nanopool_data.avgHashrate.h1 }}],
+                               ['3H avg hr', {{ nanopool_data.avgHashrate.h3 }}],
+                               ['6H avg hr', {{ nanopool_data.avgHashrate.h6 }}],
+                               ['12H avg hr', {{ nanopool_data.avgHashrate.h12 }}],
+                               ['24H avg hr', {{ nanopool_data.avgHashrate.h24 }}],
+                            ])
+                            var options = {
+                                  width: 900, height: 300,
+                                  redFrom: 45, redTo: 50,
+                                  yellowFrom:35, yellowTo: 45,
+                                  max: 50
+                            }
+                            var chart = new google.visualization.Gauge(document.getElementById('nanopool_gauges'));
+                            chart.draw(data, options);
+                        }
+                    </script>
+                {% endif %}
+            </div>
             {% for farm in farms %}
             <div class="col-md-12">
                 <h1>{{ farm.label }}</h1>
@@ -85,7 +131,7 @@
                         drawChart('GPUs\' fan speeds', 'fan-speeds-{{ worker.pk }}', {{ worker.fan_speeds_data|safe }}, ["#6df3d2", "#6df3f3", "#6dd2f3", "#6db0f3", "#6d8ef3", "#6d6df3"], 'Line')
                     </script>
                 </div>
-                <hr/>
+                <hr class="col-md-12"/>
                 {% endfor %}
             </div>
             {% endfor %}

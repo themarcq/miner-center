@@ -1,5 +1,7 @@
 from django import views
 from farms.models import Farm
+from nanopool.client import NanopoolConnector
+from django.conf import settings
 from django.shortcuts import render
 from django.contrib.auth.mixins import LoginRequiredMixin
 
@@ -28,7 +30,9 @@ class PanelView(LoginRequiredMixin, views.View):
             for worker in farm['workers']:
                 worker.set_data_length(length)
 
+        nanopool_connector = NanopoolConnector(getattr(settings, 'ETHEREUM_ADDRESS', None))
         return render(request, 'panel/panel.html', {
             'farms': farms,
-            'client_ip': get_client_ip(request)
+            'client_ip': get_client_ip(request),
+            'nanopool_data': nanopool_connector.fetch_general_info()
         })
