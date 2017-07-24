@@ -51,6 +51,8 @@ class Worker(models.Model):
             self._timedelta = timedelta(days=30)
         elif length == '8hours':
             self._timedelta = timedelta(hours=8)
+        elif length == '1hour':
+            self._timedelta = timedelta(hours=1)
         else:
             raise ValueError
 
