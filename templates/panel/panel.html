@@ -114,9 +114,21 @@
                     </script>
                 </div>
                 <div class="col-md-12">
+                    <div id="total-alt-hashrate-{{ worker.pk }}" width="900" height="200"></div>
+                    <script>
+                        drawChart('Total alt hashrate', 'total-alt-hashrate-{{ worker.pk }}', {{ worker.total_alt_hashrate_data|safe }}, ["#FFA500"])
+                    </script>
+                </div>
+                <div class="col-md-12">
                     <div id="hashrates-{{ worker.pk }}" width="900" height="200"></div>
                     <script>
                         drawChart('GPUs\' hashrates', 'hashrates-{{ worker.pk }}', {{ worker.hashrates_data|safe }}, ["#6d6df3", "#6d8ef3", "#6db0f3", "#6dd2f3", "#6df3f3", "#6df3d2"])
+                    </script>
+                </div>
+                <div class="col-md-12">
+                    <div id="alt-hashrates-{{ worker.pk }}" width="900" height="200"></div>
+                    <script>
+                        drawChart('GPUs\' alt hashrates', 'alt-hashrates-{{ worker.pk }}', {{ worker.alt_hashrates_data|safe }}, ["#6d6df3", "#6d8ef3", "#6db0f3", "#6dd2f3", "#6df3f3", "#6df3d2"])
                     </script>
                 </div>
                 <div class="col-md-12">

@@ -71,6 +71,7 @@ class Worker(models.Model):
                     {
                         'timestamp': since_date.timestamp()*60000,
                         'total_hashrate': 0,
+                        'total_alt_hashrate': 0,
                         'gpu_stats': []
                     },
                     {
@@ -90,12 +91,14 @@ class Worker(models.Model):
                         stats_fixed.append({
                             'timestamp': int(since_date.timestamp())//60*60000,
                             'total_hashrate': 0,
+                            'total_alt_hashrate': 0,
                             'gpu_stats': []
                         })
                     else:
                         stats_fixed.append({
                             'timestamp': int(stat.timestamp.timestamp())//60*60000,
                             'total_hashrate': stat.total_hashrate/1000.,
+                            'total_alt_hashrate': stat.total_alt_hashrate/1000.,
                             'gpu_stats': [{
                                 'hashrate': gpu.hashrate/1000.,
                                 'temperature': gpu.temperature,
@@ -107,11 +110,13 @@ class Worker(models.Model):
                     stats_fixed.append({
                         'timestamp': time,
                         'total_hashrate': 0,
+                        'total_alt_hashrate': 0,
                         'gpu_stats': []
                     })
                 stats_fixed.append({
                     'timestamp': int(stat.timestamp.timestamp())//60*60000,
                     'total_hashrate': stat.total_hashrate/1000.,
+                    'total_alt_hashrate': stat.total_alt_hashrate/1000.,
                     'gpu_stats': [{
                         'hashrate': gpu.hashrate/1000.,
                         'temperature': gpu.temperature,
@@ -127,6 +132,7 @@ class Worker(models.Model):
                     stats_fixed.append({
                         'timestamp': stats_fixed[-1]['timestamp']+60000,
                         'total_hashrate': 0,
+                        'total_alt_hashrate': 0,
                         'gpu_stats': []
                     })
 
@@ -152,6 +158,7 @@ class Worker(models.Model):
                     compressed_stats.append({
                         'timestamp': (since_date + ((timezone.now()-since_date)/self.resolution*i)).timestamp()*1000,
                         'total_hashrate': sum([o['total_hashrate'] for o in cut])/cut_length,
+                        'total_alt_hashrate': sum([o['total_alt_hashrate'] for o in cut])/cut_length,
                         'gpu_stats': [{
                             'hashrate': sum([o['gpu_stats'][j]['hashrate'] for o in cut])/cut_length,
                             'temperature': max([o['gpu_stats'][j]['temperature'] for o in cut]),
@@ -166,6 +173,13 @@ class Worker(models.Model):
     def total_hashrate_data(self):
         return json.dumps([['Time', 'Hashrate']]+[
             [stat['timestamp'], stat['total_hashrate']] for stat in self.stats_data
+        ])
+
+    @property
+    @exception_handle
+    def total_alt_hashrate_data(self):
+        return json.dumps([['Time', 'Alt Hashrate']]+[
+            [stat['timestamp'], stat['total_alt_hashrate']] for stat in self.stats_data
         ])
 
     def get_gpu_stat(self, attr):
@@ -186,6 +200,10 @@ class Worker(models.Model):
     def hashrates_data(self):
         return self.get_gpu_stat('hashrate')
 
+    @property
+    @exception_handle
+    def alt_hashrates_data(self):
+        return self.get_gpu_stat('alt_hashrate')
 
     @property
     @exception_handle
@@ -204,6 +222,7 @@ class WorkerStat(models.Model):
 
     uptime = models.PositiveIntegerField()
     total_hashrate = models.PositiveIntegerField()
+    total_alt_hashrate = models.PositiveIntegerField()
     shares = models.PositiveIntegerField()
     rejected_shares = models.PositiveIntegerField()
 
@@ -215,6 +234,7 @@ class GPUStat(models.Model):
         related_name='gpu_stats')
 
     hashrate = models.PositiveIntegerField()
+    alt_hashrate = models.PositiveIntegerField()
     temperature = models.PositiveIntegerField()
     fan_speed = models.PositiveIntegerField()
 
