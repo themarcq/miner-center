@@ -101,6 +101,7 @@ class Worker(models.Model):
                             'total_alt_hashrate': stat.total_alt_hashrate/1000.,
                             'gpu_stats': [{
                                 'hashrate': gpu.hashrate/1000.,
+                                'alt_hashrate': gpu.alt_hashrate/1000.,
                                 'temperature': gpu.temperature,
                                 'fan_speed': gpu.fan_speed
                             } for gpu in stat.gpu_stats.all()]
@@ -119,6 +120,7 @@ class Worker(models.Model):
                     'total_alt_hashrate': stat.total_alt_hashrate/1000.,
                     'gpu_stats': [{
                         'hashrate': gpu.hashrate/1000.,
+                        'alt_hashrate': gpu.alt_hashrate/1000.,
                         'temperature': gpu.temperature,
                         'fan_speed': gpu.fan_speed
                     } for gpu in stat.gpu_stats.all()]
@@ -140,6 +142,7 @@ class Worker(models.Model):
             for stat in stats_fixed:
                 stat['gpu_stats'] += [{
                     'hashrate': 0,
+                    'alt_hashrate': 0,
                     'temperature': 0,
                     'fan_speed': 0
                 }for i in range(self.gpu_number - len(stat['gpu_stats']))]
@@ -161,6 +164,7 @@ class Worker(models.Model):
                         'total_alt_hashrate': sum([o['total_alt_hashrate'] for o in cut])/cut_length,
                         'gpu_stats': [{
                             'hashrate': sum([o['gpu_stats'][j]['hashrate'] for o in cut])/cut_length,
+                            'alt_hashrate': sum([o['gpu_stats'][j]['alt_hashrate'] for o in cut])/cut_length,
                             'temperature': max([o['gpu_stats'][j]['temperature'] for o in cut]),
                             'fan_speed': max([o['gpu_stats'][j]['fan_speed'] for o in cut])
                         } for j in range(self.gpu_number)]
