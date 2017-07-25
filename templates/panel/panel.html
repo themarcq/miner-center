@@ -52,7 +52,7 @@
             <a href="{% url 'panel' 'month' %}" class="btn btn-success">Month</a>
             {{ client_ip }}
         </nav>
-        <div class="container">
+        <div class="">
             <div class="col-md-12">
                 {% if nanopool_data.error %}
                     <h1>{{ nanopool_data.error }}</h1>
@@ -108,38 +108,38 @@
                 <div class="col-md-3"><b>Shares</b> {{ worker.newest_stat.shares }}</div>
                 <div class="col-md-3"><b>Rejected Shares</b> {{ worker.newest_stat.rejected_shares }}</div>
                 <div class="col-md-3"><b>Uptime</b> {{ worker.newest_stat.uptime }}</div>
-                <div class="col-md-12">
-                    <div id="total-hashrate-{{ worker.pk }}" width="900" height="200"></div>
+                <div class="col-md-6">
+                    <div id="total-hashrate-{{ worker.pk }}" width="100%" height="200"></div>
                     <script>
                         drawChart('Total hashrate', 'total-hashrate-{{ worker.pk }}', {{ worker.total_hashrate_data|safe }}, ["#6df36d"])
                     </script>
                 </div>
-                <div class="col-md-12">
-                    <div id="total-alt-hashrate-{{ worker.pk }}" width="900" height="200"></div>
+                <div class="col-md-6">
+                    <div id="total-alt-hashrate-{{ worker.pk }}" width="100%" height="200"></div>
                     <script>
                         drawChart('Total alt hashrate', 'total-alt-hashrate-{{ worker.pk }}', {{ worker.total_alt_hashrate_data|safe }}, ["#FFA500"])
                     </script>
                 </div>
-                <div class="col-md-12">
-                    <div id="hashrates-{{ worker.pk }}" width="900" height="200"></div>
+                <div class="col-md-6">
+                    <div id="hashrates-{{ worker.pk }}" width="100%" height="200"></div>
                     <script>
                         drawChart('GPUs\' hashrates', 'hashrates-{{ worker.pk }}', {{ worker.hashrates_data|safe }}, ["#6d6df3", "#6d8ef3", "#6db0f3", "#6dd2f3", "#6df3f3", "#6df3d2"])
                     </script>
                 </div>
-                <div class="col-md-12">
-                    <div id="alt-hashrates-{{ worker.pk }}" width="900" height="200"></div>
+                <div class="col-md-6">
+                    <div id="alt-hashrates-{{ worker.pk }}" width="100%" height="200"></div>
                     <script>
                         drawChart('GPUs\' alt hashrates', 'alt-hashrates-{{ worker.pk }}', {{ worker.alt_hashrates_data|safe }}, ["#6d6df3", "#6d8ef3", "#6db0f3", "#6dd2f3", "#6df3f3", "#6df3d2"])
                     </script>
                 </div>
-                <div class="col-md-12">
-                    <div id="temperatures-{{ worker.pk }}" width="900" height="200"></div>
+                <div class="col-md-6">
+                    <div id="temperatures-{{ worker.pk }}" width="100%" height="200"></div>
                     <script>
                         drawChart('GPUs\' temperatures', 'temperatures-{{ worker.pk }}', {{ worker.temperatures_data|safe }}, ["#f36d6d", "#f38e6d", "#f3b06d", "#f3d26d", "#f3f36d", "#d2f36d"], 'Line')
                     </script>
                 </div>
-                <div class="col-md-12">
-                    <div id="fan-speeds-{{ worker.pk }}" width="900" height="200"></div>
+                <div class="col-md-6">
+                    <div id="fan-speeds-{{ worker.pk }}" width="100%" height="200"></div>
                     <script>
                         drawChart('GPUs\' fan speeds', 'fan-speeds-{{ worker.pk }}', {{ worker.fan_speeds_data|safe }}, ["#6df3d2", "#6df3f3", "#6dd2f3", "#6db0f3", "#6d8ef3", "#6d6df3"], 'Line')
                     </script>
