@@ -79,6 +79,7 @@ class Worker(models.Model):
                     {
                         'timestamp': timezone.now().timestamp()*60000,
                         'total_hashrate': 0,
+                        'total_alt_hashrate': 0,
                         'gpu_stats': []
                     }
                 ]
