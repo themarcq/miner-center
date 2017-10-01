@@ -34,5 +34,5 @@ class PanelView(LoginRequiredMixin, views.View):
         return render(request, 'panel/panel.html', {
             'farms': farms,
             'client_ip': get_client_ip(request),
-            'nanopool_data': nanopool_connector.fetch_general_info()
+            'nanopool_data': nanopool_connector.get_data()
         })

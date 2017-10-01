@@ -59,10 +59,12 @@
                 {% else %}
                     <div id="nanopool_balance" style="width:900px; margin: auto;">
                         <h1>
-                            <div class='col-md-4' style="color: #404040">
-                                {{ nanopool_data.balance }} <img style="height: 1em; margin-top: -0.2em" src="{% static 'images/ethereum-logo.png' %}"/>
+                            <div class='col-md-12' style="color: #404040">
+                                {{ nanopool_data.balance }} 
+                                {% if nanopool_data.daily_ethereum %}<small>({{ nanopool_data.daily_ethereum }} a day since last payment)</small>{% endif %}
+                                <img style="height: 1em; margin-top: -0.2em" src="{% static 'images/ethereum-logo.png' %}"/>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-12">
                                 <div class="progress" style="margin-top: 0.28em">
                                     <div class="progress-bar" role="progressbar" aria-valuenow="{{ nanopool_data.balance_percent }}"
                                            aria-valuemin="0" aria-valuemax="100" style="width:{{ nanopool_data.balance_percent }}%">
