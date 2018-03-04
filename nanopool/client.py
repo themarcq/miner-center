@@ -13,9 +13,10 @@ class NanopoolConnector:
     GENERAL_INFO_ENDPOINT = 'user'
     PAYMENTS_INFO_ENDPOINT = 'payments'
 
-    def __init__(self, address):
+    def __init__(self, address, cutoff_balance):
         super(NanopoolConnector, self).__init__()
         self.address = address
+        self.cutoff_balance = cutoff_balance
 
     def fetch_endpoint_data(self, endpoint):
         try:
@@ -51,7 +52,7 @@ class NanopoolConnector:
             data = data['data']
             return {
                 'balance': data['balance'],
-                'balance_percent': float(data['balance'])*500,
+                'balance_percent': float(data['balance'])/self.cutoff_balance*100,
                 'hashrate': data['hashrate'],
                 'avgHashrate': data['avgHashrate']
             }

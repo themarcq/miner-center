@@ -30,7 +30,10 @@ class PanelView(LoginRequiredMixin, views.View):
             for worker in farm['workers']:
                 worker.set_data_length(length)
 
-        nanopool_connector = NanopoolConnector(getattr(settings, 'ETHEREUM_ADDRESS', None))
+        nanopool_connector = NanopoolConnector(
+            getattr(settings, 'ETHEREUM_ADDRESS', None),
+            getattr(settings, 'NANOPOOL_CUTOFF_BALANCE', 0.2)
+        )
         return render(request, 'panel/panel.html', {
             'farms': farms,
             'client_ip': get_client_ip(request),
