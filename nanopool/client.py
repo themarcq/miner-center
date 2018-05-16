@@ -48,7 +48,7 @@ class NanopoolConnector:
 
     def fetch_general_info(self):
         data = self.fetch_endpoint_data(self.GENERAL_INFO_ENDPOINT)
-        if data['status']:
+        if data.get('status', False):
             data = data['data']
             return {
                 'balance': data['balance'],
