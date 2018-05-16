@@ -38,7 +38,7 @@ class NanopoolConnector:
 
     def fetch_last_payment_date(self):
         data = self.fetch_endpoint_data(self.PAYMENTS_INFO_ENDPOINT)
-        if data['status']:
+        if data.get('status', False):
             if len(data['data']) > 0:
                 return {
                     'last_payment_date': data['data'][0]['date']
